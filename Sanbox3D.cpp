@@ -4,7 +4,7 @@
 #include "PathManager.h"
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
-#include "Render/Camera.h"
+#include "Camera.h"
 #include "Render/Light.h"
 #include "Core/Render/Buffer.h"
 #include "Core/Render/ShaderDataType.h"
@@ -39,7 +39,7 @@ const char* const logo[] =
 };
 
 static std::ostream& operator<<(std::ostream& os, glm::vec3& vec){
-    os << "X: " << vec.x << " Y: " << vec.y << " Z:" << vec.z << ST_Endl;
+    os << "X: " << vec.x << " Y: " << vec.y << " Z:" << vec.z << std::endl;
     return os;
 }
 

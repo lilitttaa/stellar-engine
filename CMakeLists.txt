@@ -93,3 +93,8 @@ add_executable(SandBox3D "Sanbox3D.cpp")
 target_link_libraries(SandBox3D PRIVATE
   ${Application_Name}
 )
+
+add_executable(Example1 "Example1.cpp")
+target_link_libraries(Example1 PRIVATE
+  ${Application_Name}
+)
