@@ -3,6 +3,7 @@
 #include "Application.h"
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
+#include "gtc/type_ptr.hpp"
 
 using namespace ST;
 
@@ -53,6 +54,13 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 	glViewport(0, 0, width, height);
 }
 
+struct Ball
+{
+	float radius;
+	float posX, posY;
+	float velocityX, velocityY;
+};
+
 class Example1 : public ST::Application
 {
 public:
@@ -94,20 +102,20 @@ public:
 		}
 
 		std::string vertexShaderSourceStr;
-		LoadFileToStr(GetShaderDir() + "SimpleTriangle.vt.glsl", vertexShaderSourceStr);
-		// LoadFileToStr(GetShaderDir() + "SimpleTriangle.fg.glsl", vertexShaderSourceStr);
+		LoadFileToStr(GetShaderDir() + "Ball.vt.glsl", vertexShaderSourceStr);
 		const char* vertexShaderSource = vertexShaderSourceStr.c_str();
 
 		std::string fragmentShaderSourceStr;
-		LoadFileToStr(GetShaderDir() + "SimpleTriangle.fg.glsl", fragmentShaderSourceStr);
+		LoadFileToStr(GetShaderDir() + "Ball.fg.glsl", fragmentShaderSourceStr);
 		const char* fragmentShaderSource = fragmentShaderSourceStr.c_str();
 
 		// build and compile our shader program
 		// ------------------------------------
 		// vertex shader
-		unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
+		vertexShader = glCreateShader(GL_VERTEX_SHADER);
 		glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
 		glCompileShader(vertexShader);
+
 		// check for shader compile errors
 		int success;
 		char infoLog[512];
@@ -118,9 +126,10 @@ public:
 			std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
 		}
 		// fragment shader
-		unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+		fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 		glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
 		glCompileShader(fragmentShader);
+
 		// check for shader compile errors
 		glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
 		if (!success)
@@ -128,6 +137,7 @@ public:
 			glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
 			std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
 		}
+
 		// link shaders
 		shaderProgram = glCreateProgram();
 		glAttachShader(shaderProgram, vertexShader);
@@ -190,12 +200,42 @@ public:
 	{
 		processInput(window);
 		glfwPollEvents();
+
+		ball.velocityY += gravity * deltaTime;
+		ball.posX += ball.velocityX * deltaTime;
+		ball.posY += ball.velocityY * deltaTime;
+
+		if (ball.posX - ball.radius < 0.0f)
+		{
+			ball.posX = ball.radius;
+			ball.velocityX = -ball.velocityX;
+		}
+		if (ball.posX + ball.radius > SCR_WIDTH)
+		{
+			ball.posX = SCR_WIDTH - ball.radius;
+			ball.velocityX = -ball.velocityX;
+		}
+		if (ball.posY + ball.radius > SCR_HEIGHT)
+		{
+			ball.posY = SCR_HEIGHT - ball.radius;
+			ball.velocityY = -ball.velocityY;
+		}
+		if (ball.posY - ball.radius < 0.0f)
+		{
+			ball.posY = ball.radius;
+			ball.velocityY = -ball.velocityY;
+		}
 	}
 
 	virtual void Render(float deltaTime) override
 	{
 		// render
 		// ------
+		// print ball position
+		std::cout << "Ball Position: " << ball.posX << ", " << ball.posY << std::endl;
+		glUniform2f(glGetUniformLocation(shaderProgram, "ballPos"), ball.posX, ball.posY);
+		glUniform1f(glGetUniformLocation(shaderProgram, "ballRadius"), ball.radius);
+
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
@@ -226,6 +266,12 @@ protected:
 	GLFWwindow* window;
 	unsigned int VBO, VAO, EBO;
 	unsigned int shaderProgram;
+	unsigned int vertexShader;
+	unsigned int fragmentShader;
+
+	float gravity = 10.0f;
+	float timeStep = 1.0f / 60.0f;
+	Ball ball = {100.0f, 300.0f, 300.0f, 1000.0f, 150.0f};
 };
 
 ST::Application* CreateApplication() { return new Example1(); }
